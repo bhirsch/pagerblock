@@ -1,0 +1,5 @@
+name = Pager Block
+description = Generate a pager in a block.
+core = 6.x
+version = "6.x-1.0-beta1"
+project = "Stars with Stripes"
