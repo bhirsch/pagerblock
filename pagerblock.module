@@ -21,25 +21,22 @@ function pagerblock_help($path, $arg) {
 function pagerblock_block($op = 'list', $delta = 0, $edit = array()) {
   if ($op == 'list') {
     $blocks[0]['info'] = t('Generic Node Type Pager');
-    $blocks[1]['info'] = t('Upcoming Events Pager');
-    $blocks[2]['info'] = t('Past Events Pager');
+    $blocks[1]['info'] = t('Events Pager');
 //    $blocks[3]['info'] = t('Blog Post Pager');
     return $blocks;
   } else if ($op == 'view') {
     if (arg(0) == 'node' && is_numeric(arg(1))) {
       $nid = arg(1);
       switch($delta) {
+        /*
         case 0:
+          // @TODO add generic pager block
           $content = theme('pagerblock_block', $nid);
         break;
+        // */
 
         case 1:
-          $op = 'upcoming events';
-          $content = theme('pagerblock_block', $nid, $op);
-        break;
-
-        case 2:
-          $op = 'past events';
+          $op = 'events';
           $content = theme('pagerblock_block', $nid, $op);
         break;
 
@@ -85,10 +82,10 @@ function pagerblock_theme() {
 function theme_pagerblock_block($nid, $op = NULL) {
   $output = '';
   // add stylesheet
-//$path = drupal_get_path('module', 'pagerblock');
-//drupal_add_css("$path/pagerblock.css");
+  $path = drupal_get_path('module', 'pagerblock');
+  drupal_add_css("$path/pagerblock.css");
   switch ($op) {
-    case 'upcoming events': 
+    case 'events': 
       // Page through upcoming events (events taking place today or in the future).
       $now = time();
 //dsm($now, 'now');
@@ -100,44 +97,39 @@ function theme_pagerblock_block($nid, $op = NULL) {
                             ."FROM {content_type_event} WHERE nid = %d ", $nid));
 //dsm($current_event_date, 'current event date');
       // Where criteria: 
-      // - event hasn't happened
       // - event is the next event before the current event
       $sql = "SELECT n.nid FROM {node} n "
             ."JOIN {content_type_event} e ON n.nid = e.nid "
-            ."WHERE field_event_date_value >= %d " // event hasn't happened yet
-            ."AND field_event_date_value < %d "    // event happens before current event
+            ."WHERE field_event_date_value < %d "    // event happens before current event
             ."ORDER BY field_event_date_value DESC, nid "
             ."LIMIT 1";
-      $previous_nid = db_result(db_query($sql, $now, $current_event_date));
+      $previous_nid = db_result(db_query($sql, $current_event_date));
 //dsm($previous_nid, 'previous nid');
       if (!empty($previous_nid)) {
         $txt = t('PREV');
-        $previous_link = l($txt, "node/$previous_nid");
+        $options['attributes']['class'] = 'previous-event';
+        $options['attributes']['alt'] = t('Previous Event');
+        $previous_link = l($txt, "node/$previous_nid", $options);
       }
 
       // Next
       // Create next link.
 //dsm($current_event_date, 'current event date');
       // Where criteria: 
-      // - event hasn't happened
       // - event is the next event after the current event
       $sql = "SELECT n.nid FROM {node} n JOIN {content_type_event} e ON n.nid = e.nid "
-            ."WHERE field_event_date_value >= %d " // event hasn't happened yet
-            ."AND field_event_date_value > %d "    // event happens after current event
+            ."WHERE field_event_date_value > %d "    // event happens after current event
             ."ORDER BY field_event_date_value ASC, nid "
             ."LIMIT 1";
-      $next_nid = db_result(db_query($sql, $now, $current_event_date));
+      $next_nid = db_result(db_query($sql, $current_event_date));
 //dsm($next_nid, 'next nid');
       if (!empty($next_nid)) {
         $txt = t('NEXT');
-        $next_link = l($txt, "node/$next_nid");
+        $options['attributes']['class'] = 'next-event';
+        $options['attributes']['alt'] = t('Next Event');
+        $next_link = l($txt, "node/$next_nid", $options);
       }
-      $output = "$previous_link / $next_link";
-
-    break;
-
-    case 'past events': 
-      // Page through past events (events that took place before today). 
+      $output = '<div class="event-pager">'. $previous_link .' / '. $next_link .'</div>';
 
     break;
 
