@@ -29,12 +29,10 @@ function pagerblock_block($op = 'list', $delta = 0, $edit = array()) {
       $nid = arg(1);
       $node = node_load($nid);
       switch($delta) {
-        /*
         case 0:
           // @TODO add generic pager block
-          $content = theme('pagerblock_block', $nid);
+          $content = theme('pagerblock_block', $node);
         break;
-        // */
 
         case 1:
           $op = 'events';
@@ -113,18 +111,18 @@ function theme_pagerblock_block($node, $op = NULL) {
   // Create previous link.
   if (!empty($previous_nid)) {
     $txt = t('PREV');
-    $options['attributes']['class'] = "previous previous-$type";
+    $options['attributes']['class'] = "previous-node previous-$type";
     $options['attributes']['alt'] = t('Previous !type', array('!type' => $type));
     $previous_link = l($txt, "node/$previous_nid", $options);
   }
   // Create next link.
   if (!empty($next_nid)) {
     $txt = t('NEXT');
-    $options['attributes']['class'] = "next next-$type";
+    $options['attributes']['class'] = "next-node next-$type";
     $options['attributes']['alt'] = t('Next !type', array('!type' => $type));
     $next_link = l($txt, "node/$next_nid", $options);
   }
-  $output = '<div class="event-pager">'. $previous_link .' / '. $next_link .'</div>';
+  $output = '<div class="'. $type .'-pager">'. $previous_link .' / '. $next_link .'</div>';
 
   return $output;
 }
