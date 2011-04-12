@@ -73,8 +73,7 @@ function pagerblock_theme() {
  * 
  * @param $op
  *  string
- *  - upcoming events
- *  - past events
+ *  - events
  * 
  * @return 
  *  HTML pager, PREV / NEXT links
