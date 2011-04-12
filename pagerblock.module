@@ -103,8 +103,8 @@ function theme_pagerblock_block($node, $op = NULL) {
       $current_created = db_result(db_query("SELECT created "
                             ."FROM {node} WHERE nid = %d ", $nid));
 
-      $previous_nid = _pagerblock_previous_nid($nid, $current_created);
-      $next_nid = _pagerblock_next_nid($nid, $current_created);
+      $previous_nid = _pagerblock_previous_nid($type, $current_created);
+      $next_nid = _pagerblock_next_nid($type, $current_created);
       break;
   }
 
@@ -133,7 +133,7 @@ function theme_pagerblock_block($node, $op = NULL) {
 
 /**
  * @param
- *  $nid, node id 
+ *  $type, node type 
  * 
  * @param
  *  $current_created, timestamp
@@ -141,22 +141,23 @@ function theme_pagerblock_block($node, $op = NULL) {
  * @return
  *  $nid, node id of previous node.
  */
-function _pagerblock_previous_nid($nid, $current_created) {
+function _pagerblock_previous_nid($type, $current_created) {
   // Where criteria: 
   // - node is the next node created before the current node
   $sql = "SELECT n.nid FROM {node} n "
         ."WHERE created < %d "    // event happens before current event
+        ."AND type = '%s' " 
         ."AND status = 1 " 
         ."ORDER BY created DESC, nid DESC "
         ."LIMIT 1";
-  $previous_nid = db_result(db_query($sql, $current_created));
+  $previous_nid = db_result(db_query($sql, $current_created, $type));
   
   return $previous_nid;
 }
 
 /**
  * @param
- *  $nid, node id 
+ *  $type, node type 
  * 
  * @param
  *  $current_created, timestamp
@@ -164,15 +165,16 @@ function _pagerblock_previous_nid($nid, $current_created) {
  * @return
  *  $nid, node id of next node.
  */
-function _pagerblock_next_nid($nid, $current_created) {
+function _pagerblock_next_nid($type, $current_created) {
   // Where criteria: 
   // - node is the next node created after the current node
   $sql = "SELECT n.nid FROM {node} n "
         ."WHERE created > %d "    // event happens before current event
+        ."AND type = '%s' " 
         ."AND status = 1 " 
         ."ORDER BY created ASC, nid ASC "
         ."LIMIT 1";
-  $next_nid = db_result(db_query($sql, $current_created));
+  $next_nid = db_result(db_query($sql, $current_created, $type));
   
   return $next_nid;
 }
