@@ -27,6 +27,7 @@ function pagerblock_block($op = 'list', $delta = 0, $edit = array()) {
   } else if ($op == 'view') {
     if (arg(0) == 'node' && is_numeric(arg(1))) {
       $nid = arg(1);
+      $node = node_load($nid);
       switch($delta) {
         /*
         case 0:
@@ -37,7 +38,7 @@ function pagerblock_block($op = 'list', $delta = 0, $edit = array()) {
 
         case 1:
           $op = 'events';
-          $content = theme('pagerblock_block', $nid, $op);
+          $content = theme('pagerblock_block', $node, $op);
         break;
 
         /*
@@ -60,7 +61,7 @@ function pagerblock_block($op = 'list', $delta = 0, $edit = array()) {
 function pagerblock_theme() {
   return array(
     'pagerblock_block' => array(
-      'arguments' => array('nid' => NULL, 'type' => NULL),
+      'arguments' => array('node' => NULL, 'op' => NULL),
     )
   );
 }
@@ -68,17 +69,19 @@ function pagerblock_theme() {
 /**
  * Implementation of theme function.
  * 
- * @param $nid
- *  node id
+ * @param $node
+ *  node object
  * 
- * @param $type
+ * @param $op
  *  string
  *  - events
  * 
  * @return 
  *  HTML pager, PREV / NEXT links
  */
-function theme_pagerblock_block($nid, $op = NULL) {
+function theme_pagerblock_block($node, $op = NULL) {
+  $nid = $node->nid;
+  $type = $node->type;
   // add stylesheet
   $path = drupal_get_path('module', 'pagerblock');
   drupal_add_css("$path/pagerblock.css");
@@ -90,24 +93,8 @@ function theme_pagerblock_block($nid, $op = NULL) {
       // @todo Handle versions (vid).
       $current_event_date = db_result(db_query("SELECT field_event_date_value "
                             ."FROM {content_type_event} WHERE nid = %d ", $nid));
-
-      // Create previous link.
       $previous_nid = _pagerblock_previous_event_nid($nid, $current_event_date);
-      if (!empty($previous_nid)) {
-        $txt = t('PREV');
-        $options['attributes']['class'] = 'previous previous-event';
-        $options['attributes']['alt'] = t('Previous Event');
-        $previous_link = l($txt, "node/$previous_nid", $options);
-      }
-
-      // Create next link.
       $next_nid = _pagerblock_next_event_nid($nid, $current_event_date);
-      if (!empty($next_nid)) {
-        $txt = t('NEXT');
-        $options['attributes']['class'] = 'next next-event';
-        $options['attributes']['alt'] = t('Next Event');
-        $next_link = l($txt, "node/$next_nid", $options);
-      }
       break;
 
     default: 
@@ -117,26 +104,25 @@ function theme_pagerblock_block($nid, $op = NULL) {
       $current_created = db_result(db_query("SELECT created "
                             ."FROM {node} WHERE nid = %d ", $nid));
 
-      // Create previous link.
       $previous_nid = _pagerblock_previous_nid($nid, $current_created);
-      if (!empty($previous_nid)) {
-        $txt = t('PREV');
-        $options['attributes']['class'] = 'previous';
-        $options['attributes']['alt'] = t('Previous Event');
-        $previous_link = l($txt, "node/$previous_nid", $options);
-      }
-
-      // Create next link.
-      $next_nid = _pagerblock_next_event_nid($nid, $current_event_date);
-      if (!empty($next_nid)) {
-        $txt = t('NEXT');
-        $options['attributes']['class'] = 'next-event';
-        $options['attributes']['alt'] = t('Next Event');
-        $next_link = l($txt, "node/$next_nid", $options);
-      }
+      $next_nid = _pagerblock_next_nid($nid, $current_created);
       break;
   }
 
+  // Create previous link.
+  if (!empty($previous_nid)) {
+    $txt = t('PREV');
+    $options['attributes']['class'] = "previous previous-$type";
+    $options['attributes']['alt'] = t('Previous !type', array('!type' => $type));
+    $previous_link = l($txt, "node/$previous_nid", $options);
+  }
+  // Create next link.
+  if (!empty($next_nid)) {
+    $txt = t('NEXT');
+    $options['attributes']['class'] = "next next-$type";
+    $options['attributes']['alt'] = t('Next !type', array('!type' => $type));
+    $next_link = l($txt, "node/$next_nid", $options);
+  }
   $output = '<div class="event-pager">'. $previous_link .' / '. $next_link .'</div>';
 
   return $output;
