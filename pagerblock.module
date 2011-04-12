@@ -122,7 +122,7 @@ function theme_pagerblock_block($node, $op = NULL) {
     $options['attributes']['alt'] = t('Next !type', array('!type' => $type));
     $next_link = l($txt, "node/$next_nid", $options);
   }
-  $output = '<div class="'. $type .'-pager">'. $previous_link .' / '. $next_link .'</div>';
+  $output = '<div class="pager '. $type .'-pager">'. $previous_link .' / '. $next_link .'</div>';
 
   return $output;
 }
