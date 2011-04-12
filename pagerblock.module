@@ -20,7 +20,7 @@ function pagerblock_help($path, $arg) {
  */
 function pagerblock_block($op = 'list', $delta = 0, $edit = array()) {
   if ($op == 'list') {
-    $blocks[0]['info'] = t('Generic Node Type Pager');
+    $blocks[0]['info'] = t('Generic Pager (by node type and created date)');
     $blocks[1]['info'] = t('Events Pager');
 //    $blocks[3]['info'] = t('Blog Post Pager');
     return $blocks;
@@ -133,6 +133,52 @@ function theme_pagerblock_block($node, $op = NULL) {
 
 /**
  * @param
+ *  $nid, node id 
+ * 
+ * @param
+ *  $current_created, timestamp
+ * 
+ * @return
+ *  $nid, node id of previous node.
+ */
+function _pagerblock_previous_nid($nid, $current_created) {
+  // Where criteria: 
+  // - node is the next node created before the current node
+  $sql = "SELECT n.nid FROM {node} n "
+        ."WHERE created < %d "    // event happens before current event
+        ."AND status = 1 " 
+        ."ORDER BY created DESC, nid DESC "
+        ."LIMIT 1";
+  $previous_nid = db_result(db_query($sql, $current_created));
+  
+  return $previous_nid;
+}
+
+/**
+ * @param
+ *  $nid, node id 
+ * 
+ * @param
+ *  $current_created, timestamp
+ * 
+ * @return
+ *  $nid, node id of next node.
+ */
+function _pagerblock_next_nid($nid, $current_created) {
+  // Where criteria: 
+  // - node is the next node created after the current node
+  $sql = "SELECT n.nid FROM {node} n "
+        ."WHERE created > %d "    // event happens before current event
+        ."AND status = 1 " 
+        ."ORDER BY created ASC, nid ASC "
+        ."LIMIT 1";
+  $next_nid = db_result(db_query($sql, $current_created));
+  
+  return $next_nid;
+}
+
+/**
+ * @param
  *  $nid, node id of event node
  * 
  * @param
@@ -148,7 +194,7 @@ function _pagerblock_previous_event_nid($nid, $current_event_date) {
         ."JOIN {content_type_event} e ON n.nid = e.nid "
         ."WHERE field_event_date_value < %d "    // event happens before current event
         ."AND status = 1 " 
-        ."ORDER BY field_event_date_value DESC, nid "
+        ."ORDER BY field_event_date_value DESC, nid DESC "
         ."LIMIT 1";
   $previous_nid = db_result(db_query($sql, $current_event_date));
   
@@ -171,7 +217,7 @@ function _pagerblock_next_event_nid($nid, $current_event_date) {
   $sql = "SELECT n.nid FROM {node} n JOIN {content_type_event} e ON n.nid = e.nid "
         ."WHERE field_event_date_value > %d "    // event happens after current event
         ."AND status = 1 " 
-        ."ORDER BY field_event_date_value ASC, nid "
+        ."ORDER BY field_event_date_value ASC, nid ASC "
         ."LIMIT 1";
   $next_nid = db_result(db_query($sql, $current_event_date));
 
