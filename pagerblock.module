@@ -82,6 +82,7 @@ function pagerblock_theme() {
 function theme_pagerblock_block($node, $op = NULL) {
   $nid = $node->nid;
   $type = $node->type;
+
   // add stylesheet
   $path = drupal_get_path('module', 'pagerblock');
   drupal_add_css("$path/pagerblock.css");
