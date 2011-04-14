@@ -22,7 +22,7 @@ function pagerblock_block($op = 'list', $delta = 0, $edit = array()) {
   if ($op == 'list') {
     $blocks[0]['info'] = t('Generic Pager (by node type and created date)');
     $blocks[1]['info'] = t('Events Pager');
-//    $blocks[3]['info'] = t('Blog Post Pager');
+    $blocks[3]['info'] = t('Blog Post Pager');
     return $blocks;
   } else if ($op == 'view') {
     if (arg(0) == 'node' && is_numeric(arg(1))) {
@@ -30,7 +30,6 @@ function pagerblock_block($op = 'list', $delta = 0, $edit = array()) {
       $node = node_load($nid);
       switch($delta) {
         case 0:
-          // @TODO add generic pager block
           $content = theme('pagerblock_block', $node);
         break;
 
@@ -39,12 +38,10 @@ function pagerblock_block($op = 'list', $delta = 0, $edit = array()) {
           $content = theme('pagerblock_block', $node, $op);
         break;
 
-        /*
         case 3:
           $op = 'blog';
-          $content = theme('pagerblock_block', $nid, $op);
+          $content = theme('pagerblock_block', $node, $op);
         break;
-        // */
       }
       $block['subject'] = '';
       $block['content'] = $content;
@@ -89,11 +86,19 @@ function theme_pagerblock_block($node, $op = NULL) {
   switch ($op) {
     case 'events': 
       // Get date of current event.
-      // @todo Handle versions (vid).
       $current_event_date = db_result(db_query("SELECT field_event_date_value "
                             ."FROM {content_type_event} WHERE nid = %d ", $nid));
       $previous_nid = _pagerblock_previous_event_nid($nid, $current_event_date);
       $next_nid = _pagerblock_next_event_nid($nid, $current_event_date);
+      break;
+
+    case 'blog':
+      // Get date of current blog post.
+      $current_blog_date = db_result(db_query("SELECT field_blog_date_value"
+                            ."FROM {content_type_blog} WHERE nid = %d ", $nid));
+      $previous_nid = _pagerblock_previous_blog_nid($current_blog_date);
+      $next_nid = _pagerblock_next_blog_nid($current_blog_date);
+
       break;
 
     default: 
@@ -222,6 +227,47 @@ function _pagerblock_next_event_nid($nid, $current_event_date) {
         ."ORDER BY field_event_date_value ASC, nid ASC "
         ."LIMIT 1";
   $next_nid = db_result(db_query($sql, $current_event_date));
+
+  return $next_nid;
+}
+
+/**
+ * @param
+ *  $current_blog_date, timestamp
+ * 
+ * @return
+ *  $nid, node id of previous event node.
+ */
+function _pagerblock_previous_blog_nid($current_blog_date) {
+  // Where criteria: 
+  // Blog post is the next post before the current blog post.
+  $sql = "SELECT n.nid FROM {node} n "
+        ."JOIN {content_type_blog} e ON n.nid = e.nid "
+        ."WHERE field_blog_date_value < %d "    // blog post dated before current post
+        ."AND status = 1 " 
+        ."ORDER BY field_blog_date_value DESC, nid DESC "
+        ."LIMIT 1";
+  $previous_nid = db_result(db_query($sql, $current_event_date));
+  
+  return $previous_nid;
+}
+
+/**
+ * @param
+ *  $current_blog_date, timestamp
+ * 
+ * @return
+ *  $nid, node id of next event node.
+ */
+function _pagerblock_next_blog_nid($current_blog_date) {
+  // Where criteria: 
+  // Blog post is dated next after the current post.
+  $sql = "SELECT n.nid FROM {node} n JOIN {content_type_blog} e ON n.nid = e.nid "
+        ."WHERE field_blog_date_value > %d "    // Blog post dated after current post.
+        ."AND status = 1 " 
+        ."ORDER BY field_blog_date_value ASC, nid ASC "
+        ."LIMIT 1";
+  $next_nid = db_result(db_query($sql, $current_blog_date));
 
   return $next_nid;
 }
